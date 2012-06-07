@@ -8,25 +8,7 @@
 
 #import "DDURLBuilder.h"
 
-NSString *ddurlbuilder_percentEncode(NSString *string) {
-    NSMutableString * output = [NSMutableString string];
-    const unsigned char * source = (const unsigned char *)[string UTF8String];
-    size_t sourceLen = strlen((const char *)source);
-    for (size_t i = 0; i < sourceLen; ++i) {
-        const unsigned char thisChar = source[i];
-        if (thisChar == ' '){
-            [output appendString:@"+"];
-        } else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' || 
-                   (thisChar >= 'a' && thisChar <= 'z') ||
-                   (thisChar >= 'A' && thisChar <= 'Z') ||
-                   (thisChar >= '0' && thisChar <= '9')) {
-            [output appendFormat:@"%c", thisChar];
-        } else {
-            [output appendFormat:@"%%%02X", thisChar];
-        }
-    }
-    return output;
-}
+
 
 @implementation DDURLBuilder
 
@@ -37,8 +19,37 @@ NSString *ddurlbuilder_percentEncode(NSString *string) {
 @synthesize path;
 @synthesize fragment;
 @synthesize port;
+@synthesize shouldEncodeSpaceAsHex;
 
 @synthesize usesSchemeSeparators;
+
+
+-(NSString*)ddurlbuilder_percentEncode:(NSString*)string
+{
+    NSMutableString * output = [NSMutableString string];
+    const unsigned char * source = (const unsigned char *)[string UTF8String];
+    size_t sourceLen = strlen((const char *)source);
+    for (size_t i = 0; i < sourceLen; ++i) 
+    {
+        const unsigned char thisChar = source[i];
+        if ( thisChar == ' ' && !self.shouldEncodeSpaceAsHex )
+        {
+            [output appendString:@"+"];
+        } 
+        else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' || 
+                 (thisChar >= 'a' && thisChar <= 'z') ||
+                 (thisChar >= 'A' && thisChar <= 'Z') ||
+                 (thisChar >= '0' && thisChar <= '9')) 
+        {
+            [output appendFormat:@"%c", thisChar];
+        }
+        else 
+        {
+            [output appendFormat:@"%%%02X", thisChar];
+        }
+    }
+    return output;
+}
 
 + (id) URLBuilderWithURL:(NSURL *)url {
     return [[[self alloc] initWithURL:url] autorelease];
@@ -99,23 +110,23 @@ NSString *ddurlbuilder_percentEncode(NSString *string) {
 - (NSURL *)URL {
     if ([self scheme] == nil || [self host] == nil) { return nil; }
     
-    NSMutableString *url = [NSMutableString string];
+    NSMutableString *urlString = [NSMutableString string];
     
-    [url appendFormat:@"%@:", [self scheme]];
+    [urlString appendFormat:@"%@:", [self scheme]];
     if ([self usesSchemeSeparators]) {
-        [url appendString:@"//"];
+        [urlString appendString:@"//"];
     }
     if ([self user]) {
-        [url appendString:ddurlbuilder_percentEncode([self user])];
+        [urlString appendString: [ self ddurlbuilder_percentEncode: [self user] ]];
         if ([self password]) {
-            [url appendFormat:@":%@", ddurlbuilder_percentEncode([self password])];
+            [urlString appendFormat:@":%@", [ self ddurlbuilder_percentEncode: [self password] ] ];
         }
-        [url appendString:@"@"];
+        [urlString appendString:@"@"];
     }
     
-    [url appendString:ddurlbuilder_percentEncode([self host])];
+    [urlString appendString: [ self ddurlbuilder_percentEncode: [self host] ] ];
     if ([self port]) {
-        [url appendFormat:@":%@", [self port]];
+        [urlString appendFormat:@":%@", [self port]];
     }
     
     
@@ -123,30 +134,33 @@ NSString *ddurlbuilder_percentEncode(NSString *string) {
         NSArray *pathComponents = [[self path] pathComponents];
         for (NSString *component in pathComponents) {
             if ([component isEqualToString:@"/"]) { continue; }
-            [url appendFormat:@"/%@", ddurlbuilder_percentEncode(component)];
+            [urlString appendFormat:@"/%@", [ self ddurlbuilder_percentEncode: component ] ];
         }
     }
     
-    if ([queryValues count] > 0) {
+    if ([queryValues count] > 0) 
+    {
         NSMutableArray *components = [NSMutableArray array];
-        for (NSString *key in queryValues) {
+        for (NSString *key in queryValues) 
+        {
             NSArray *values = [queryValues objectForKey:key];
-            key = ddurlbuilder_percentEncode(key);
-            for (NSString *value in values) {
-                value = ddurlbuilder_percentEncode(value);
+            key = [ self ddurlbuilder_percentEncode: key ];
+            for (NSString *value in values) 
+            {
+                value = [ self ddurlbuilder_percentEncode: value ];
                 NSString *component = [NSString stringWithFormat:@"%@=%@", key, value];
                 [components addObject:component];
             }
         }
         NSString *queryString = [components componentsJoinedByString:@"&"];
-        [url appendFormat:@"?%@", queryString];
+        [urlString appendFormat:@"?%@", queryString];
     }
     
     if ([self fragment]) {
-        [url appendFormat:@"#%@", [self fragment]];
+        [urlString appendFormat:@"#%@", [self fragment]];
     }
     
-    return [NSURL URLWithString:url];
+    return [NSURL URLWithString:urlString];
 }
 
 - (NSArray *) queryValuesForKey:(NSString *)key {

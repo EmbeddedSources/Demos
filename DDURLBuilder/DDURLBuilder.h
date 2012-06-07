@@ -36,6 +36,7 @@
 @property (nonatomic, retain) NSString *fragment;
 
 @property (nonatomic, assign) BOOL usesSchemeSeparators;
+@property (nonatomic, assign) BOOL shouldEncodeSpaceAsHex;
 
 - (NSArray *) queryValuesForKey:(NSString *)key;
 - (void) addQueryValue:(NSString *)value forKey:(NSString *)key;
