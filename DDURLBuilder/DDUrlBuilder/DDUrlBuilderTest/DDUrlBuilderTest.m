@@ -3,6 +3,8 @@
 
 @implementation DDUrlBuilderTest
 
+
+// non-deterministic due to NSDictionary usage
 -(void)testAuthorExample
 {
     
@@ -20,7 +22,38 @@
 
     NSURL* received_ = [ builder URL ];
     
+    // non-deterministic due to NSDictionary usage
     STAssertTrue( [ expected_ isEqual: received_ ], @"result URL mismatch" );
+}
+
+-(void)testSkipEncodingFlagAppendsPathAsIs
+{
+    DDURLBuilder* builder_ = [ DDURLBuilder URLBuilderWithURL: [ NSURL URLWithString: @"http://10.38.10.244/sitecore/login" ] ];
+    builder_.shouldSkipPathPercentEncoding = YES;
+    builder_.path = @"/sitecore/shell/Applications/Login/Users/Users.aspx?su=%2fsitecore%2fshell%2fapplications%2fclientusesoswindows.aspx%3fsc_lang%3den";
+    
+    NSURL* receivedUrl_ = [ builder_ URL ];
+    NSString* received_ = [ receivedUrl_ absoluteString ];
+    
+    STAssertEqualObjects(
+        received_,
+        @"http://10.38.10.244/sitecore/shell/Applications/Login/Users/Users.aspx?su=%2fsitecore%2fshell%2fapplications%2fclientusesoswindows.aspx%3fsc_lang%3den",
+        @"URL mismatch");
+}
+
+-(void)testDisabledSkipEncodingFlagSplitsPath
+{
+    DDURLBuilder* builder_ = [ DDURLBuilder URLBuilderWithURL: [ NSURL URLWithString: @"http://10.38.10.244/sitecore/login" ] ];
+    builder_.shouldSkipPathPercentEncoding = NO;
+    builder_.path = @"/sitecore/shell/Applications/Login/Users/Users.aspx?su=%2fsitecore%2fshell%2fapplications%2fclientusesoswindows.aspx%3fsc_lang%3den";
+    
+    NSURL* receivedUrl_ = [ builder_ URL ];
+    NSString* received_ = [ receivedUrl_ absoluteString ];
+    
+    STAssertEqualObjects(
+                         received_,
+                         @"http://10.38.10.244/sitecore/shell/Applications/Login/Users/Users.aspx%3Fsu%3D%252fsitecore%252fshell%252fapplications%252fclientusesoswindows.aspx%253fsc_lang%253den",
+                         @"URL mismatch");
 }
 
 @end

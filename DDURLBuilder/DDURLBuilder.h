@@ -9,17 +9,10 @@
 #import <Foundation/Foundation.h>
 
 
-@interface DDURLBuilder : NSObject {
-    @private
-    
-    NSString *scheme;
-    NSString *user;
-    NSString *password;
-    NSString *host;
-    NSNumber *port;
-    NSString *path;
-    NSMutableDictionary *queryValues;
-    NSString *fragment;
+@interface DDURLBuilder : NSObject
+{
+@private
+    NSMutableDictionary* _queryValues;
 }
 
 + (id) URLBuilderWithURL:(NSURL *)url;
@@ -27,16 +20,17 @@
 
 @property (nonatomic, retain) NSURL *URL;
 
-@property (nonatomic, retain) NSString *scheme;
-@property (nonatomic, retain) NSString *user;
-@property (nonatomic, retain) NSString *password;
-@property (nonatomic, retain) NSString *host;
-@property (nonatomic, retain) NSNumber *port;
-@property (nonatomic, retain) NSString *path;
-@property (nonatomic, retain) NSString *fragment;
+@property ( nonatomic, retain ) NSString *scheme;
+@property ( nonatomic, retain ) NSString *user;
+@property ( nonatomic, retain ) NSString *password;
+@property ( nonatomic, retain ) NSString *host;
+@property ( nonatomic, retain ) NSNumber *port;
+@property ( nonatomic, retain ) NSString *path;
+@property ( nonatomic, retain ) NSString *fragment;
 
-@property (nonatomic, assign) BOOL usesSchemeSeparators;
-@property (nonatomic, assign) BOOL shouldEncodeSpaceAsHex;
+@property ( nonatomic, assign ) BOOL shouldSkipPathPercentEncoding;
+@property ( nonatomic, assign ) BOOL usesSchemeSeparators;
+@property ( nonatomic, assign ) BOOL shouldEncodeSpaceAsHex;
 
 - (NSArray *) queryValuesForKey:(NSString *)key;
 - (void) addQueryValue:(NSString *)value forKey:(NSString *)key;
